@@ -1,100 +1,127 @@
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Random;
 
 public class SortTest {
+
     private static final int MIN_COUNT = 10;
     private static final int MAX_COUNT = 3000;
     private static final int MIN_VALUE = 0;
     private static final int MAX_VALUE = 3000;
 
-    private final int[] data;
-
-    public SortTest() {
-        this(System.nanoTime());
-    }
+    private final Integer[] data;
 
     public SortTest(long seed) {
-        this.data = generateRandomData(seed);
+        int size = MIN_COUNT + new Random(seed).nextInt(MAX_COUNT - MIN_COUNT + 1);
+        this.data = generateRandomData(seed, size);
     }
 
-    public int[] getDataCopy() {
-        return data.clone();
-    }
-
-    public void saveToFile(Path path) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < data.length; i++) {
-            if (i > 0) sb.append(',');
-            sb.append(data[i]);
-        }
-        Files.writeString(path, sb.toString());
-    }
-
-    private static int[] generateRandomData(long seed) {
+    // Genera los números aleatorios
+    private static Integer[] generateRandomData(long seed, int size) {
         Random random = new Random(seed);
-        int size = MIN_COUNT + random.nextInt(MAX_COUNT - MIN_COUNT + 1);
-        int[] arr = new int[size];
+        Integer[] arr = new Integer[size];
         for (int i = 0; i < size; i++) {
             arr[i] = MIN_VALUE + random.nextInt(MAX_VALUE - MIN_VALUE + 1);
         }
         return arr;
     }
 
-    private static String firstFiveAndLast(int[] arr) {
-        int count = Math.min(5, arr.length);
+    // Guarda los datos en archivo
+    public void saveToFile(Path path) throws IOException {
         StringBuilder sb = new StringBuilder();
-        sb.append("first5: ");
-        for (int i = 0; i < count; i++) {
-            if (i > 0) sb.append(", ");
-            sb.append(arr[i]);
+        for (int i = 0; i < data.length; i++) {
+            if (i > 0) sb.append(",");
+            sb.append(data[i]);
         }
-        sb.append(" | last: ").append(arr[arr.length - 1]);
-        return sb.toString();
+        Files.writeString(path, sb.toString());
+    }
+
+    // Lee los datos desde archivo
+    public static Integer[] readFromFile(Path path) throws IOException {
+        String content = Files.readString(path).trim();
+        if (content.isEmpty()) return new Integer[0];
+
+        String[] parts = content.split(",");
+        Integer[] arr = new Integer[parts.length];
+        for (int i = 0; i < parts.length; i++) {
+            arr[i] = Integer.parseInt(parts[i].trim());
+        }
+        return arr;
     }
 
     public static void main(String[] args) throws IOException {
-        SortTest test = new SortTest();
-        test.saveToFile(Path.of("sort_data.txt"));
 
-        SortAlgorithm radix = new RadixSort();
-        SortAlgorithm insertion = new InsertionSort();
+        // 1️⃣ Se genera el archivo con entre 10 y 3000 números
+        SortTest generator = new SortTest(System.nanoTime());
+        Path filePath = Path.of("sort_data.txt");
+        generator.saveToFile(filePath);
 
-        int[] unsorted = test.getDataCopy();
+        // 2️⃣ Se leen los datos desde el archivo
+        Integer[] baseData = readFromFile(filePath);
 
-        long radixStart = System.nanoTime();
-        int[] radixSorted = radix.sort(unsorted);
-        long radixElapsedNs = System.nanoTime() - radixStart;
+        // Algoritmos
+        SortAlgorithm<Integer> insertion = new InsertionSort<>();
+        SortAlgorithm<Integer> gnome = new GnomeSort<>();
+        SortAlgorithm<Integer> merge = new MergeSort<>();
+        SortAlgorithm<Integer> quick = new QuickSort<>();
+        RadixSort radix = new RadixSort();
 
-        long insertionStart = System.nanoTime();
-        int[] insertionSorted = insertion.sort(unsorted);
-        long insertionElapsedNs = System.nanoTime() - insertionStart;
+        // 3️⃣ Ejecutar con datos DESORDENADOS
+        Integer[] insertionData = baseData.clone();
+        Integer[] gnomeData = baseData.clone();
+        Integer[] mergeData = baseData.clone();
+        Integer[] quickData = baseData.clone();
+        Integer[] radixData = baseData.clone();
 
-        long radixSortedStart = System.nanoTime();
-        int[] radixSortedAgain = radix.sort(radixSorted);
-        long radixSortedElapsedNs = System.nanoTime() - radixSortedStart;
+        long t = System.nanoTime();
+        Integer[] insertionSorted = insertion.sort(insertionData);
+        long insertionUnsortedTime = System.nanoTime() - t;
 
-        long insertionSortedStart = System.nanoTime();
-        int[] insertionSortedAgain = insertion.sort(radixSorted);
-        long insertionSortedElapsedNs = System.nanoTime() - insertionSortedStart;
+        t = System.nanoTime();
+        Integer[] gnomeSorted = gnome.sort(gnomeData);
+        long gnomeUnsortedTime = System.nanoTime() - t;
 
-        boolean sameResult = Arrays.equals(radixSorted, insertionSorted);
-        boolean sameSortedAgain = Arrays.equals(radixSortedAgain, insertionSortedAgain);
-        double radixMs = radixElapsedNs / 1_000_000.0;
-        double insertionMs = insertionElapsedNs / 1_000_000.0;
-        double radixSortedMs = radixSortedElapsedNs / 1_000_000.0;
-        double insertionSortedMs = insertionSortedElapsedNs / 1_000_000.0;
-        System.out.println("Generated: " + test.data.length + " numbers");
-        System.out.println("Unsorted " + firstFiveAndLast(unsorted));
-        System.out.println("RadixSort first/last: " + radixSorted[0] + " / " + radixSorted[radixSorted.length - 1]);
-        System.out.println("InsertionSort first/last: " + insertionSorted[0] + " / " + insertionSorted[insertionSorted.length - 1]);
-        System.out.println("Same result: " + sameResult);
-        System.out.println("Same result (sorted input): " + sameSortedAgain);
-        System.out.printf("RadixSort time (unsorted): %.3f ms%n", radixMs);
-        System.out.printf("InsertionSort time (unsorted): %.3f ms%n", insertionMs);
-        System.out.printf("RadixSort time (sorted): %.3f ms%n", radixSortedMs);
-        System.out.printf("InsertionSort time (sorted): %.3f ms%n", insertionSortedMs);
+        t = System.nanoTime();
+        Integer[] mergeSorted = merge.sort(mergeData);
+        long mergeUnsortedTime = System.nanoTime() - t;
+
+        t = System.nanoTime();
+        Integer[] quickSorted = quick.sort(quickData);
+        long quickUnsortedTime = System.nanoTime() - t;
+
+        t = System.nanoTime();
+        Integer[] radixSorted = radix.sort(radixData);
+        long radixUnsortedTime = System.nanoTime() - t;
+
+        // 4️⃣ Ejecutar con datos YA ORDENADOS
+        t = System.nanoTime();
+        insertion.sort(insertionSorted.clone());
+        long insertionSortedTime = System.nanoTime() - t;
+
+        t = System.nanoTime();
+        gnome.sort(gnomeSorted.clone());
+        long gnomeSortedTime = System.nanoTime() - t;
+
+        t = System.nanoTime();
+        merge.sort(mergeSorted.clone());
+        long mergeSortedTime = System.nanoTime() - t;
+
+        t = System.nanoTime();
+        quick.sort(quickSorted.clone());
+        long quickSortedTime = System.nanoTime() - t;
+
+        t = System.nanoTime();
+        radix.sort(radixSorted.clone());
+        long radixSortedTime = System.nanoTime() - t;
+
+        // 5️⃣ Mostrar resultados
+        System.out.println("Cantidad de números: " + baseData.length);
+
+        System.out.printf("InsertionSort  -> desordenado: %d ns | ordenado: %d ns%n", insertionUnsortedTime, insertionSortedTime);
+        System.out.printf("GnomeSort      -> desordenado: %d ns | ordenado: %d ns%n", gnomeUnsortedTime, gnomeSortedTime);
+        System.out.printf("MergeSort      -> desordenado: %d ns | ordenado: %d ns%n", mergeUnsortedTime, mergeSortedTime);
+        System.out.printf("QuickSort      -> desordenado: %d ns | ordenado: %d ns%n", quickUnsortedTime, quickSortedTime);
+        System.out.printf("RadixSort      -> desordenado: %d ns | ordenado: %d ns%n", radixUnsortedTime, radixSortedTime);
     }
 }
