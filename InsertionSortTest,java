@@ -1,0 +1,37 @@
+import static org.junit.Assert.*;
+import org.junit.Test;
+
+public class InsertionSortTest {
+
+    @Test
+    public void testSortNormalCase() {
+        SortAlgorithm<Integer> sort = new InsertionSort<>();
+        Integer[] input = {5, 3, 8, 1, 2};
+        Integer[] expected = {1, 2, 3, 5, 8};
+
+        Integer[] result = sort.sort(input);
+
+        assertArrayEquals(expected, result);
+    }
+
+    @Test
+    public void testDoesNotModifyOriginal() {
+        SortAlgorithm<Integer> sort = new InsertionSort<>();
+        Integer[] input = {4, 2, 3};
+        Integer[] originalCopy = input.clone();
+
+        sort.sort(input);
+
+        assertArrayEquals(originalCopy, input);
+    }
+
+    @Test
+    public void testAlreadySorted() {
+        SortAlgorithm<Integer> sort = new InsertionSort<>();
+        Integer[] input = {1, 2, 3, 4, 5};
+
+        Integer[] result = sort.sort(input);
+
+        assertArrayEquals(new Integer[]{1,2,3,4,5}, result);
+    }
+}
