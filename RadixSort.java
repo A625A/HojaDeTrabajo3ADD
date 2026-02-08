@@ -1,21 +1,29 @@
 import java.util.Arrays;
 
-public class RadixSort implements SortAlgorithm {
+public class RadixSort implements SortAlgorithm<Integer> {
     @Override
-    public int[] sort(int[] array) {
-        int[] arr = array.clone(); 
-        if (arr.length == 0) return arr;
+    public Integer[] sort(Integer[] array) {
+        Integer[] input = array.clone();
+        if (input.length == 0) return input;
 
-        for (int v : arr) {
+        int[] arr = new int[input.length];
+        for (int i = 0; i < input.length; i++) {
+            int v = input[i];
             if (v < 0) {
                 throw new IllegalArgumentException(
                     "RadixSort only supports non-negative integers."
                 );
             }
+            arr[i] = v;
         }
 
         radixSort(arr);
-        return arr;
+
+        Integer[] result = new Integer[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            result[i] = arr[i];
+        }
+        return result;
     }
 
     private static int getMax(int[] arr) {

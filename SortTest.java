@@ -52,12 +52,12 @@ public class SortTest {
 
     public static void main(String[] args) throws IOException {
 
-        // 1️⃣ Se genera el archivo con entre 10 y 3000 números
+        // Se genera el archivo con entre 10 y 3000 números
         SortTest generator = new SortTest(System.nanoTime());
         Path filePath = Path.of("sort_data.txt");
         generator.saveToFile(filePath);
 
-        // 2️⃣ Se leen los datos desde el archivo
+        // Se leen los datos desde el archivo
         Integer[] baseData = readFromFile(filePath);
 
         // Algoritmos
@@ -67,7 +67,7 @@ public class SortTest {
         SortAlgorithm<Integer> quick = new QuickSort<>();
         RadixSort radix = new RadixSort();
 
-        // 3️⃣ Ejecutar con datos DESORDENADOS
+        // Ejecutar con datos DESORDENADOS
         Integer[] insertionData = baseData.clone();
         Integer[] gnomeData = baseData.clone();
         Integer[] mergeData = baseData.clone();
@@ -94,7 +94,7 @@ public class SortTest {
         Integer[] radixSorted = radix.sort(radixData);
         long radixUnsortedTime = System.nanoTime() - t;
 
-        // 4️⃣ Ejecutar con datos YA ORDENADOS
+        // Ejecutar con datos YA ORDENADOS
         t = System.nanoTime();
         insertion.sort(insertionSorted.clone());
         long insertionSortedTime = System.nanoTime() - t;
@@ -115,7 +115,7 @@ public class SortTest {
         radix.sort(radixSorted.clone());
         long radixSortedTime = System.nanoTime() - t;
 
-        // 5️⃣ Mostrar resultados
+        //Mostrar resultados
         System.out.println("Cantidad de números: " + baseData.length);
 
         System.out.printf("InsertionSort  -> desordenado: %d ns | ordenado: %d ns%n", insertionUnsortedTime, insertionSortedTime);
