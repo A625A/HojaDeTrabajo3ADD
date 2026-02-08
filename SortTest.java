@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Random;
 
 public class SortTest {
@@ -42,6 +43,18 @@ public class SortTest {
         return arr;
     }
 
+    private static String firstFiveAndLast(int[] arr) {
+        int count = Math.min(5, arr.length);
+        StringBuilder sb = new StringBuilder();
+        sb.append("first5: ");
+        for (int i = 0; i < count; i++) {
+            if (i > 0) sb.append(", ");
+            sb.append(arr[i]);
+        }
+        sb.append(" | last: ").append(arr[arr.length - 1]);
+        return sb.toString();
+    }
+
     public static void main(String[] args) throws IOException {
         SortTest test = new SortTest();
         test.saveToFile(Path.of("sort_data.txt"));
@@ -49,10 +62,39 @@ public class SortTest {
         SortAlgorithm radix = new RadixSort();
         SortAlgorithm insertion = new InsertionSort();
 
-        int[] radixSorted = radix.sort(test.getDataCopy());
-        int[] insertionSorted = insertion.sort(test.getDataCopy());
+        int[] unsorted = test.getDataCopy();
+
+        long radixStart = System.nanoTime();
+        int[] radixSorted = radix.sort(unsorted);
+        long radixElapsedNs = System.nanoTime() - radixStart;
+
+        long insertionStart = System.nanoTime();
+        int[] insertionSorted = insertion.sort(unsorted);
+        long insertionElapsedNs = System.nanoTime() - insertionStart;
+
+        long radixSortedStart = System.nanoTime();
+        int[] radixSortedAgain = radix.sort(radixSorted);
+        long radixSortedElapsedNs = System.nanoTime() - radixSortedStart;
+
+        long insertionSortedStart = System.nanoTime();
+        int[] insertionSortedAgain = insertion.sort(radixSorted);
+        long insertionSortedElapsedNs = System.nanoTime() - insertionSortedStart;
+
+        boolean sameResult = Arrays.equals(radixSorted, insertionSorted);
+        boolean sameSortedAgain = Arrays.equals(radixSortedAgain, insertionSortedAgain);
+        double radixMs = radixElapsedNs / 1_000_000.0;
+        double insertionMs = insertionElapsedNs / 1_000_000.0;
+        double radixSortedMs = radixSortedElapsedNs / 1_000_000.0;
+        double insertionSortedMs = insertionSortedElapsedNs / 1_000_000.0;
         System.out.println("Generated: " + test.data.length + " numbers");
+        System.out.println("Unsorted " + firstFiveAndLast(unsorted));
         System.out.println("RadixSort first/last: " + radixSorted[0] + " / " + radixSorted[radixSorted.length - 1]);
         System.out.println("InsertionSort first/last: " + insertionSorted[0] + " / " + insertionSorted[insertionSorted.length - 1]);
+        System.out.println("Same result: " + sameResult);
+        System.out.println("Same result (sorted input): " + sameSortedAgain);
+        System.out.printf("RadixSort time (unsorted): %.3f ms%n", radixMs);
+        System.out.printf("InsertionSort time (unsorted): %.3f ms%n", insertionMs);
+        System.out.printf("RadixSort time (sorted): %.3f ms%n", radixSortedMs);
+        System.out.printf("InsertionSort time (sorted): %.3f ms%n", insertionSortedMs);
     }
 }
